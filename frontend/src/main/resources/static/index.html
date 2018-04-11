@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring Boot - Istio RBAC Booster - Frontend</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans">
+    <style>
+        body {
+            font-family: "Open Sans", Arial, sans-serif;
+            font-size: 14px;
+            color: #444;
+        }
+
+        table {
+            background-color: #fff;
+            width: 100%;
+        }
+
+        th {
+            background-color: #999;
+            color: rgba(255, 255, 255, 0.66);
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        td {
+            background-color: #f9f9f9;
+        }
+
+        td.available {
+            background-color: aquamarine;
+        }
+
+        th, td {
+            min-width: 120px;
+            padding: 10px 20px;
+        }
+
+        th.active {
+            color: #fff;
+        }
+
+        input#search-box {
+            padding: 8px;
+            font-size: 16px;
+            margin: 5px 3px;
+        }
+
+        button#login {
+            background-color: green;
+            border: none;
+            color: white;
+            padding: 5px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            outline: none;
+            float: right;
+        }
+
+        button#login.logged {
+            background-color: red;
+        }
+
+        th.active .arrow {
+            opacity: 1;
+        }
+
+        .arrow {
+            display: inline-block;
+            vertical-align: middle;
+            width: 0;
+            height: 0;
+            margin-left: 5px;
+            opacity: 0.66;
+        }
+
+        .arrow.asc {
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 4px solid #fff;
+        }
+
+        .arrow.dsc {
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid #fff;
+        }
+
+        #library {
+            border: 1px solid #f78c56;
+            border-radius: 5px;
+            padding: 1em;
+        }
+    </style>
+</head>
+<body>
+<!-- component template -->
+<script type="text/x-template" id="grid-template">
+    <table>
+        <thead>
+        <tr>
+            <th v-for="key in columns"
+                @click="sortBy(key)"
+                :class="{ active: sortKey == key }">
+                {{ key | capitalize }}
+                <span class="arrow" :class="sortOrders[key] > 0 ? 'asc' : 'dsc'"></span>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="entry in filteredData">
+            <td v-for="key in columns" v-html="booleanToCheckMark( entry[key] )" v-bind:class="{available: entry['available']}">
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</script>
+
+
+<div id="library">
+    <button id="login" type="button" @click="logInOrOut()" v-bind:class="{logged: loggedIn}">{{logInOrOutTitle}}</button>
+    <form id="search">
+        <input id="search-box" name="query" v-model="searchQuery" type="search" placeholder="Search…">
+    </form>
+    <library
+            :data="gridData"
+            :columns="gridColumns"
+            :filter-key="searchQuery">
+    </library>
+</div>
+</body>
+<script>
+    // register the grid component
+    Vue.component('library', {
+        template: '#grid-template',
+        props: {
+            data: Array,
+            columns: Array,
+            filterKey: String
+        },
+        data: function () {
+            let sortOrders = {};
+            this.columns.forEach(function (key) {
+                sortOrders[key] = 1
+            });
+            return {
+                sortKey: '',
+                sortOrders: sortOrders
+            }
+        },
+        computed: {
+            filteredData: function () {
+                let sortKey = this.sortKey;
+                let filterKey = this.filterKey && this.filterKey.toLowerCase();
+                let order = this.sortOrders[sortKey] || 1;
+                let data = this.data;
+                if (filterKey) {
+                    data = data.filter(function (row) {
+                        return Object.keys(row).some(function (key) {
+                            return String(row[key]).toLowerCase().indexOf(filterKey) > -1
+                        })
+                    })
+                }
+                if (sortKey) {
+                    data = data.slice().sort(function (a, b) {
+                        a = a[sortKey];
+                        b = b[sortKey];
+                        return (a === b ? 0 : a > b ? 1 : -1) * order
+                    })
+                }
+                return data
+            }
+        },
+        filters: {
+            capitalize: function (str) {
+                return str.charAt(0).toUpperCase() + str.slice(1)
+            },
+            booleanToCheckMark: function (str) {
+                if (str === true) {
+                    return '&#10003;' // check mark
+                }
+
+                if (str === false) {
+                    return '';
+                }
+
+                return str;
+            }
+        },
+        methods: {
+            sortBy: function (key) {
+                this.sortKey = key;
+                this.sortOrders[key] = this.sortOrders[key] * -1
+            },
+            booleanToCheckMark: function (str) {
+                if (str === true) {
+                    return '&#10003;' // check mark
+                }
+
+                if (str === false) {
+                    return '';
+                }
+
+                return str;
+            }
+        }
+    });
+
+    // bootstrap the demo
+    let library = new Vue({
+        el: '#library',
+        data: {
+            searchQuery: '',
+            gridColumns: ['date', 'title', 'available'],
+            gridData: [
+                {available: false, title: 'The Man in the High Castle', date: 1962},
+                {available: true, title: 'The Three Stigmata of Palmer Eldritch', date: 1965},
+                {available: true, title: 'Do Androids Dream of Electric Sheep?', date: 1968},
+                {available: false, title: 'Ubik', date: 1969}
+            ],
+            loggedIn: false
+        },
+        computed: {
+            logInOrOutTitle: function () {
+                return this.loggedIn ? 'Log out' : 'Log in as Librarian';
+            }
+        },
+        methods: {
+            logInOrOut: function () {
+                this.loggedIn = !this.loggedIn
+            }
+        }
+    })
+</script>
+</html>

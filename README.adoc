@@ -1,0 +1,52 @@
+== Purpose
+
+Explain what this booster is demonstrating, what is its main goal.
+
+== Technical details
+
+Detail the main technical aspects which are of interest in this booster, in particular with respect to its goal.
+
+Embedded code example with language-specific syntax highlighting
+[source,yaml]
+some:
+    yaml: example
+
+
+Example of remote source code inclusion, the `tags` must refer to specific markers in the target source file. In this example,
+the target file delimitates the source code to be included with `// tag::snippet-container[]` and `// end::snippet-container[]`.
+While remote inclusion currently doesn't work on GitHub, this allows for proper inclusion of remote content on the snowdrop.me
+website.
+
+[source,java]
+----
+include::https://raw.githubusercontent.com/snowdrop/spring-boot-tomcat-logging-booster/master/src/main/java/me/snowdrop/logging/TomcatLoggingApplication.java[tags=snippet-container]
+----
+
+== Deploying and interacting with the booster
+
+Describe the steps to deploy and interact with the booster assuming a working OpenShift cluster (usually, minishift <<mini>>).
+
+Here are example steps:
+
+- Create a new OpenShift project `example-project` (or whatever you want to call it):
+
+[source,bash,options="nowrap",subs="attributes+"]
+----
+$ oc new-project example-project
+----
+
+- Build and deploy the Spring Boot application using the Fabric8 Maven Plugin <<fmp>>
+
+[source,bash,options="nowrap",subs="attributes+"]
+----
+$ mvn clean fabric8:deploy -Popenshift
+----
+
+- ...
+
+Describe simple interactions with the booster with relevant output.
+
+[bibliography]
+== References
+
+- [[[mini,1]]] Minishift: https://docs.openshift.org/latest/minishift/index.html
